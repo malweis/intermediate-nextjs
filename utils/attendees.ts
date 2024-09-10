@@ -3,8 +3,9 @@ import { db } from '@/db/db'
 import { attendees, events, rsvps } from '@/db/schema'
 import { eq, sql } from 'drizzle-orm'
 import { delay } from './delay'
+import { memoize } from 'nextjs-better-unstable-cache'
 
-export const getAttendeesCountForDashboard = async (userId: string) => {
+export const getAttendeesCountForDashboard = memoize(async (userId: string) => {
   await delay()
 
   const counts = await db
@@ -21,4 +22,11 @@ export const getAttendeesCountForDashboard = async (userId: string) => {
   const total = counts.reduce((acc, count) => acc + count.totalAttendees, 0)
 
   return total
-}
+}, {
+  persist: true,
+  revalidateTags:  () => ['dashboard:attendees'],
+  suppressWarnings: true,
+  log: ['datacache', 'verbose'],
+  logid: 'datacache:attendees',
+
+})
